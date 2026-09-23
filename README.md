@@ -1,71 +1,66 @@
-# DijitalKalkan — Android MVP (GitHub Actions ile APK derleme)
+# Market Asistan (MVP)
 
-Bu proje, telefondan Android Studio kurmadan, **GitHub üzerinden APK derlemen**
-için hazırlanmıştır.
+Kişisel mutfak ve alışveriş asistanı — kiler takibi, tarif eşleştirme, market listesi,
+harcama takibi ve su takibi. Veriler telefonda **localStorage** ile saklanır (internet gerekmez).
 
-## Bu MVP'de neler var?
+## Bu projede neler var / neler yok
 
-- Ebeveyn Modu: takip edilecek uygulamalara günlük dakika limiti belirleme,
-  uyku modu saat aralığı belirleme
-- Çocuk Modu: bugünkü uygulama kullanımını (YouTube, TikTok, Instagram, Chrome)
-  görüntüleme
-- Arka planda 15 dakikada bir çalışan otomatik kontrol: limit yaklaşınca/
-  dolunca bildirim gönderir
+**Var (çalışır durumda):**
+- 🏠 Kiler yönetimi (manuel ürün ekleme)
+- 🍳 Evdeki malzemeye göre tarif eşleştirme (%kaç malzeme mevcut)
+- 🛒 Market listesi + eksik malzemeleri tek tıkla listeye ekleme
+- 💰 Harcama kaydı + aylık toplam grafiği (kart bazlı)
+- 💧 Su takibi
+- 📊 Ana sayfa özeti
 
-## Önemli sınırlama (dürüstçe belirtiyorum)
+**Yok (Faz 2 — sonradan eklenmesi gerekir):**
+- 📷 Barkod tarama (kamera plugin'i + Open Food Facts API entegrasyonu gerekir)
+- Health Connect / otomatik adım takibi
+- Gerçek kalori/besin veritabanı (şu an tarifler sabit kcal değeriyle geliyor)
+- Bildirimler (yerel push notification plugin'i gerekir)
 
-Bu sürüm **tek cihazda** çalışır — ebeveyn ve çocuk aynı telefonda "Ebeveyn
-Modu" ve "Çocuk Modu" arasında geçiş yapar. Gerçek anlamda ebeveynin kendi
-telefonundan **çocuğun ayrı bir cihazını** uzaktan yönetmesi için bir backend
-(örn. Firebase Firestore + Authentication) gerekir. Bunun kurulumu senin kendi
-Firebase hesabına bağlı `google-services.json` dosyası gerektirdiğinden burada
-otomatik eklenemedi. Proje yapısı buna kolayca genişletilebilir (bkz. aşağıda
-"Sıradaki adım").
+## APK'yi nasıl alırsın (GitHub Actions ile, bilgisayarına hiçbir şey kurmadan)
 
-Ayrıca Android, `PACKAGE_USAGE_STATS` iznini kod ile otomatik veremez —
-kullanıcı Ayarlar > Özel erişim > Kullanım verilerine erişim ekranından elle
-izin vermelidir. Uygulama bu ekranı otomatik açan bir buton içeriyor.
+1. GitHub'da yeni, **boş** bir repo oluştur (README eklemeden).
+2. Bu klasörün içeriğini o repoya push et:
 
-## APK'yı nasıl alırım?
+   ```bash
+   cd market-asistan
+   git init
+   git add .
+   git commit -m "ilk surum"
+   git branch -M main
+   git remote add origin https://github.com/KULLANICI_ADIN/REPO_ADIN.git
+   git push -u origin main
+   ```
 
-1. GitHub'da yeni bir repo oluştur (örn. `dijitalkalkan`).
-2. Bu klasördeki tüm dosyaları o repoya yükle (push et).
-3. GitHub reposunda **Actions** sekmesine git.
-4. "Build APK" workflow'unun otomatik çalıştığını göreceksin (her `main`
-   dalına push'ta tetiklenir). Çalışması bitince açıp altında
-   **Artifacts** bölümünden `DijitalKalkan-debug-apk` dosyasını indir.
-5. İndirdiğin `.zip` içinden `app-debug.apk` dosyasını telefonuna at ve kur
-   (telefonda "bilinmeyen kaynaklardan yükleme" iznini açman gerekebilir).
+3. GitHub'da reponun **Actions** sekmesine git. "Build APK" workflow'u otomatik başlayacak
+   (birkaç dakika sürer — ilk seferde Android platformunu oluşturduğu için biraz uzun sürebilir).
+4. Workflow bitince, o çalışmanın (run) sayfasının en altında **Artifacts** bölümünden
+   `market-asistan-debug-apk` dosyasını indir. İçinden çıkan `app-debug.apk` dosyasını
+   telefonuna atıp kurabilirsin (bilinmeyen kaynaklardan yükleme izni gerekebilir).
 
-İlk çalıştırmayı elle tetiklemek istersen: Actions sekmesi → "Build APK" →
-"Run workflow" butonunu kullanabilirsin (workflow'a `workflow_dispatch`
-eklendi, bu yüzden manuel de tetiklenebilir).
+> Not: Bu debug APK'dir, test/kendi kullanımın için yeterlidir. Play Store'a yüklemek
+> istersen ayrıca imzalı (signed) release APK/AAB üretmen gerekir — istersen onun için de
+> workflow hazırlayabilirim.
 
-## Git komutlarıyla push (terminal kullanıyorsan)
+## Yerelde (opsiyonel) Android Studio ile açmak istersen
 
 ```bash
-cd DijitalKalkan
-git init
-git add .
-git commit -m "İlk MVP"
-git branch -M main
-git remote add origin https://github.com/KULLANICI_ADIN/dijitalkalkan.git
-git push -u origin main
+npm install
+npx cap add android
+npx cap sync android
+npx cap open android
 ```
 
-GitHub mobil uygulaması veya web arayüzü üzerinden dosya yükleyerek de (drag
-& drop) aynı işlemi terminale hiç dokunmadan yapabilirsin.
+## Dosya yapısı
 
-## Sıradaki adım (V2): gerçek çok cihazlı senkronizasyon
-
-1. [Firebase Console](https://console.firebase.google.com) üzerinden ücretsiz
-   bir proje oluştur.
-2. Android app ekle, paket adı olarak `com.dijitalkalkan.app` gir.
-3. İndirdiğin `google-services.json` dosyasını `app/` klasörüne koy.
-4. `app/build.gradle` içine `com.google.gms.google-services` eklentisini ve
-   Firestore/Authentication bağımlılıklarını ekle.
-5. `PrefsManager` sınıfındaki yerel okuma/yazma işlemlerini Firestore
-   koleksiyonlarıyla değiştir (örn. `families/{familyId}/children/{childId}/limits`).
-
-Bu adıma geldiğinde bana tekrar yazabilirsin, Firebase entegrasyonunu ve
-ebeveyn-çocuk eşleştirme ekranlarını birlikte ekleriz.
+```
+www/          → uygulamanın kendisi (HTML/CSS/JS, tüm mantık burada)
+  index.html
+  style.css
+  app.js
+capacitor.config.json  → Capacitor ayarları
+package.json
+.github/workflows/build-apk.yml  → APK'yi otomatik derleyen GitHub Actions
+```

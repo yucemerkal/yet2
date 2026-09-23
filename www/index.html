@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Market Asistan</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1>🍳 Market Asistan</h1>
+</header>
+
+<main id="app">
+
+  <!-- ANA SAYFA -->
+  <section id="tab-home" class="tab active">
+    <h2>👋 Günaydın!</h2>
+    <div class="cards" id="homeSummary"></div>
+
+    <h3>🍳 Bugün Ne Pişirsem?</h3>
+    <div id="homeRecipes"></div>
+
+    <h3>🛒 Market Listesi</h3>
+    <div id="homeShopping"></div>
+  </section>
+
+  <!-- KİLER -->
+  <section id="tab-pantry" class="tab">
+    <h2>🏠 Kiler</h2>
+    <form id="pantryForm" class="inline-form">
+      <input type="text" id="pantryName" placeholder="Ürün adı" required>
+      <input type="number" id="pantryQty" placeholder="Miktar" value="1" min="0" step="0.1">
+      <select id="pantryUnit">
+        <option value="adet">adet</option>
+        <option value="gr">gr</option>
+        <option value="kg">kg</option>
+        <option value="ml">ml</option>
+        <option value="l">l</option>
+      </select>
+      <input type="date" id="pantryExpiry">
+      <button type="submit">Ekle</button>
+    </form>
+    <ul id="pantryList" class="item-list"></ul>
+  </section>
+
+  <!-- TARİFLER -->
+  <section id="tab-recipes" class="tab">
+    <h2>🍳 Tarifler</h2>
+    <div id="recipeList"></div>
+  </section>
+
+  <!-- MARKET -->
+  <section id="tab-market" class="tab">
+    <h2>🛒 Market Listesi</h2>
+    <form id="shoppingForm" class="inline-form">
+      <input type="text" id="shoppingName" placeholder="Ürün ekle" required>
+      <button type="submit">Ekle</button>
+    </form>
+    <ul id="shoppingListEl" class="item-list"></ul>
+
+    <h3>💰 Alışveriş Kaydet</h3>
+    <form id="expenseForm" class="inline-form">
+      <input type="number" id="expenseAmount" placeholder="Tutar (TL)" min="0" step="0.01" required>
+      <select id="expenseCategory">
+        <option value="Market">🛒 Market</option>
+        <option value="Restoran">🍽️ Restoran</option>
+        <option value="Kafe">☕ Kafe</option>
+        <option value="Atıştırmalık">🥤 Atıştırmalık</option>
+        <option value="Paket servis">🍕 Paket servis</option>
+        <option value="Diğer">Diğer</option>
+      </select>
+      <button type="submit">Kaydet</button>
+    </form>
+  </section>
+
+  <!-- İSTATİSTİKLER -->
+  <section id="tab-stats" class="tab">
+    <h2>📊 İstatistikler</h2>
+
+    <h3>💧 Bugünkü Su</h3>
+    <div id="waterToday" class="water-box">
+      <div class="water-amount"><span id="waterAmount">0</span> / <span id="waterGoal">2500</span> ml</div>
+      <div class="water-buttons">
+        <button data-ml="250">+250 ml</button>
+        <button data-ml="500">+500 ml</button>
+      </div>
+    </div>
+
+    <h3>💳 Aylık Harcamalar</h3>
+    <div id="expenseSummary"></div>
+
+    <h3>📜 Son Harcamalar</h3>
+    <ul id="expenseHistory" class="item-list"></ul>
+  </section>
+
+</main>
+
+<nav class="bottombar">
+  <button class="navbtn active" data-tab="home">🏠<span>Ana Sayfa</span></button>
+  <button class="navbtn" data-tab="pantry">🏠<span>Kiler</span></button>
+  <button class="navbtn" data-tab="recipes">🍳<span>Tarifler</span></button>
+  <button class="navbtn" data-tab="market">🛒<span>Market</span></button>
+  <button class="navbtn" data-tab="stats">📊<span>İstatistik</span></button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>

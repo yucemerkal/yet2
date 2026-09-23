@@ -1,0 +1,48 @@
+name: Build APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repoyu indir
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Java kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: NPM bağımlılıklarını kur
+        run: npm install
+
+      - name: Android platformunu ekle (yoksa) ve senkronla
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+          npx cap sync android
+
+      - name: Gradle wrapper'a çalıştırma izni ver
+        working-directory: android
+        run: chmod +x gradlew
+
+      - name: Debug APK derle
+        working-directory: android
+        run: ./gradlew assembleDebug
+
+      - name: APK'yi artifact olarak yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: market-asistan-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk

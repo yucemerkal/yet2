@@ -1,0 +1,6 @@
+{
+  "appId": "com.marketasistan.app",
+  "appName": "Market Asistan",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
