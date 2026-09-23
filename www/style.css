@@ -171,3 +171,38 @@ h3{margin-top:24px;margin-bottom:8px;font-size:16px;color:var(--muted);}
 .navbtn.active{color:var(--primary);}
 
 .empty{color:var(--muted);font-size:14px;padding:12px 0;}
+
+.hint{color:var(--muted);font-size:13px;margin-top:-8px;margin-bottom:14px;}
+
+.cook-btn{
+  display:block;
+  width:100%;
+  margin-top:20px;
+  background:var(--primary);
+  color:#fff;
+  border:none;
+  border-radius:12px;
+  padding:16px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.recipe-card.general{background:var(--primary-light);border-color:var(--primary);}
+.link-row{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:10px;
+}
+a.src-link{
+  display:inline-block;
+  font-size:13px;
+  padding:6px 10px;
+  border-radius:8px;
+  background:#fff;
+  border:1px solid var(--border);
+  color:var(--text);
+  text-decoration:none;
+}
+a.src-link.yt{border-color:#e03131;color:#e03131;}

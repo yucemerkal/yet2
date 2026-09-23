@@ -14,41 +14,38 @@
 
 <main id="app">
 
-  <!-- ANA SAYFA -->
+  <!-- ANA SAYFA: HAFTALIK ALIŞVERİŞ GİRİŞİ -->
   <section id="tab-home" class="tab active">
-    <h2>👋 Günaydın!</h2>
-    <div class="cards" id="homeSummary"></div>
+    <h2>📝 Bu Hafta Ne Aldın?</h2>
+    <p class="hint">Eve aldığın ürünleri kilosu ve fiyatıyla gir. Sonra "Pişir" butonuyla evdekilerle ne yapabileceğine bakalım.</p>
 
-    <h3>🍳 Bugün Ne Pişirsem?</h3>
-    <div id="homeRecipes"></div>
-
-    <h3>🛒 Market Listesi</h3>
-    <div id="homeShopping"></div>
-  </section>
-
-  <!-- KİLER -->
-  <section id="tab-pantry" class="tab">
-    <h2>🏠 Kiler</h2>
-    <form id="pantryForm" class="inline-form">
-      <input type="text" id="pantryName" placeholder="Ürün adı" required>
-      <input type="number" id="pantryQty" placeholder="Miktar" value="1" min="0" step="0.1">
-      <select id="pantryUnit">
-        <option value="adet">adet</option>
-        <option value="gr">gr</option>
-        <option value="kg">kg</option>
-        <option value="ml">ml</option>
-        <option value="l">l</option>
-      </select>
-      <input type="date" id="pantryExpiry">
+    <form id="weeklyForm" class="inline-form">
+      <input type="text" id="weeklyName" placeholder="Ürün adı (ör: domates)" required>
+      <input type="number" id="weeklyKg" placeholder="Kilo (kg)" min="0" step="0.1" required>
+      <input type="number" id="weeklyPrice" placeholder="Fiyat (TL)" min="0" step="0.01" required>
       <button type="submit">Ekle</button>
     </form>
+
+    <div class="cards" id="weeklySummary"></div>
+
+    <h3>Bu Hafta Eklenenler</h3>
+    <ul id="weeklyList" class="item-list"></ul>
+
+    <button id="cookBtn" class="cook-btn">🍳 Pişir — Evdekilerle Ne Yapabilirim?</button>
+  </section>
+
+  <!-- KİLER: EVDEKİ TÜM ÜRÜNLER -->
+  <section id="tab-pantry" class="tab">
+    <h2>🏠 Kiler — Evdeki Ürünler</h2>
+    <p class="hint">Tükettiğin ya da biten ürünleri buradan silebilirsin.</p>
     <ul id="pantryList" class="item-list"></ul>
   </section>
 
-  <!-- TARİFLER -->
+  <!-- NE PİŞİREBİLİRİM: SADECE PİŞİR BUTONUNA BASILINCA DOLAR -->
   <section id="tab-recipes" class="tab">
-    <h2>🍳 Tarifler</h2>
-    <div id="recipeList"></div>
+    <h2>🍳 Ne Pişirebilirim?</h2>
+    <p class="hint">Evindeki malzemelere göre eşleşen yemekler — video ve yazılı tarifler için kaynaklara yönlendiriyoruz.</p>
+    <div id="recipeLinks"></div>
   </section>
 
   <!-- MARKET -->
@@ -59,20 +56,6 @@
       <button type="submit">Ekle</button>
     </form>
     <ul id="shoppingListEl" class="item-list"></ul>
-
-    <h3>💰 Alışveriş Kaydet</h3>
-    <form id="expenseForm" class="inline-form">
-      <input type="number" id="expenseAmount" placeholder="Tutar (TL)" min="0" step="0.01" required>
-      <select id="expenseCategory">
-        <option value="Market">🛒 Market</option>
-        <option value="Restoran">🍽️ Restoran</option>
-        <option value="Kafe">☕ Kafe</option>
-        <option value="Atıştırmalık">🥤 Atıştırmalık</option>
-        <option value="Paket servis">🍕 Paket servis</option>
-        <option value="Diğer">Diğer</option>
-      </select>
-      <button type="submit">Kaydet</button>
-    </form>
   </section>
 
   <!-- İSTATİSTİKLER -->
@@ -98,9 +81,9 @@
 </main>
 
 <nav class="bottombar">
-  <button class="navbtn active" data-tab="home">🏠<span>Ana Sayfa</span></button>
+  <button class="navbtn active" data-tab="home">📝<span>Ana Sayfa</span></button>
   <button class="navbtn" data-tab="pantry">🏠<span>Kiler</span></button>
-  <button class="navbtn" data-tab="recipes">🍳<span>Tarifler</span></button>
+  <button class="navbtn" data-tab="recipes">🍳<span>Ne Pişirsem</span></button>
   <button class="navbtn" data-tab="market">🛒<span>Market</span></button>
   <button class="navbtn" data-tab="stats">📊<span>İstatistik</span></button>
 </nav>

@@ -11,6 +11,7 @@ const DB = {
   }
 };
 
+// pantry (evdeki ürünler) = tüm zamanların birikimli girişleri: {id, name, kg, price, date}
 let pantry = DB.get('pantry', []);
 let shoppingList = DB.get('shoppingList', []);
 let expenses = DB.get('expenses', []); // {id, date(ISO), amount, category}
@@ -26,43 +27,45 @@ function save(){
 function uid(){ return Date.now() + '-' + Math.random().toString(36).slice(2,7); }
 function todayKey(){ return new Date().toISOString().slice(0,10); }
 function monthKey(d){ return (d||new Date().toISOString()).slice(0,7); }
+function isThisWeek(dateISO){
+  const d = new Date(dateISO);
+  const now = new Date();
+  const diffDays = (now - d) / (1000*60*60*24);
+  return diffDays <= 7;
+}
 
-// ---------- SABİT TARİF VERİTABANI ----------
-// Malzeme adları pantry'deki isimlerle küçük harf karşılaştırılır (basit içerir kontrolü).
-const RECIPES = [
-  { name:'Menemen', time:'15 dk', kcal:320, servings:2,
-    ingredients:['yumurta','domates','biber','soğan'],
-    steps:'Soğan ve biberi kavurun, domatesi ekleyip pişirin, üzerine yumurtaları kırıp karıştırarak pişirin.' },
-  { name:'Sebzeli Omlet', time:'10 dk', kcal:260, servings:1,
-    ingredients:['yumurta','biber','domates','peynir'],
-    steps:'Sebzeleri doğrayıp hafifçe soteleyin, çırpılmış yumurtayı ekleyip peynirle üzerini kapatın.' },
-  { name:'Domatesli Makarna', time:'20 dk', kcal:420, servings:2,
-    ingredients:['makarna','domates','soğan','peynir'],
-    steps:'Makarnayı haşlayın. Soğan ve domatesten sos yapıp makarnayla karıştırın, peynir serpin.' },
-  { name:'Tavuklu Makarna', time:'25 dk', kcal:480, servings:2,
-    ingredients:['tavuk','makarna','krema','mantar'],
-    steps:'Tavuğu ve mantarı soteleyin, kremayı ekleyin, haşlanmış makarnayla karıştırın.' },
-  { name:'Peynirli Tost', time:'8 dk', kcal:280, servings:1,
-    ingredients:['ekmek','peynir'],
-    steps:'Ekmeğin arasına peyniri koyup tost makinesinde kızartın.' },
-  { name:'Yoğurtlu Elma + Ceviz', time:'5 dk', kcal:180, servings:1,
-    ingredients:['elma','yoğurt','ceviz'],
-    steps:'Elmayı doğrayın, yoğurdun üzerine ekleyip cevizle süsleyin.' },
-  { name:'Sütlü Müsli', time:'5 dk', kcal:250, servings:1,
-    ingredients:['süt','müsli'],
-    steps:'Müslinin üzerine soğuk sütü dökün.' },
+// ---------- SABİT YEMEK LİSTESİ (SADECE EŞLEŞTİRME İÇİN — TARİF METNİ YOK) ----------
+// Buradaki isimler sadece pantry ile eşleştirip "bunu yapabilirsin" demek için kullanılıyor.
+// Gerçek tarif/video için kullanıcı internete yönlendiriliyor (aşağıdaki link fonksiyonlarına bak).
+const DISHES = [
+  { name:'Menemen', ingredients:['yumurta','domates','biber','soğan'] },
+  { name:'Sebzeli Omlet', ingredients:['yumurta','biber','domates','peynir'] },
+  { name:'Domatesli Makarna', ingredients:['makarna','domates','soğan','peynir'] },
+  { name:'Tavuklu Makarna', ingredients:['tavuk','makarna','krema','mantar'] },
+  { name:'Peynirli Tost', ingredients:['ekmek','peynir'] },
+  { name:'Yoğurtlu Elma ve Ceviz', ingredients:['elma','yoğurt','ceviz'] },
+  { name:'Sütlü Müsli', ingredients:['süt','müsli'] },
+  { name:'Patates Yemeği', ingredients:['patates','soğan','domates'] },
+  { name:'Mercimek Çorbası', ingredients:['kırmızı mercimek','soğan','havuç'] },
+  { name:'Izgara Tavuk Salata', ingredients:['tavuk','marul','domates'] },
 ];
 
 function pantryNames(){
   return pantry.map(p => p.name.trim().toLowerCase());
 }
-function recipeMatch(recipe){
+function dishMatch(dish){
   const names = pantryNames();
-  const have = recipe.ingredients.filter(ing => names.some(n => n.includes(ing) || ing.includes(n)));
-  const missing = recipe.ingredients.filter(ing => !have.includes(ing));
-  const pct = Math.round((have.length / recipe.ingredients.length) * 100);
+  const have = dish.ingredients.filter(ing => names.some(n => n.includes(ing) || ing.includes(n)));
+  const missing = dish.ingredients.filter(ing => !have.includes(ing));
+  const pct = Math.round((have.length / dish.ingredients.length) * 100);
   return { pct, missing };
 }
+
+// ---------- İNTERNET YÖNLENDİRME LİNKLERİ ----------
+function youtubeSearchUrl(q){ return 'https://www.youtube.com/results?search_query=' + encodeURIComponent(q); }
+function googleSearchUrl(q){ return 'https://www.google.com/search?q=' + encodeURIComponent(q); }
+function nefisSearchUrl(q){ return 'https://www.nefisyemektarifleri.com/arama/?s=' + encodeURIComponent(q); }
+function yemekComSearchUrl(q){ return 'https://yemek.com/arama/?q=' + encodeURIComponent(q); }
 
 // ---------- SEKME (TAB) YÖNETİMİ ----------
 document.querySelectorAll('.navbtn').forEach(btn => {
@@ -76,59 +79,93 @@ function switchTab(tab){
   renderAll();
 }
 
-// ---------- KİLER ----------
-document.getElementById('pantryForm').addEventListener('submit', e => {
+// ---------- HAFTALIK ALIŞVERİŞ GİRİŞİ (ANA SAYFA) ----------
+document.getElementById('weeklyForm').addEventListener('submit', e => {
   e.preventDefault();
-  const name = document.getElementById('pantryName').value.trim();
-  const qty = parseFloat(document.getElementById('pantryQty').value) || 1;
-  const unit = document.getElementById('pantryUnit').value;
-  const expiry = document.getElementById('pantryExpiry').value;
-  if(!name) return;
-  pantry.push({ id: uid(), name, qty, unit, expiry });
+  const name = document.getElementById('weeklyName').value.trim();
+  const kg = parseFloat(document.getElementById('weeklyKg').value);
+  const price = parseFloat(document.getElementById('weeklyPrice').value);
+  if(!name || isNaN(kg) || isNaN(price)) return;
+  pantry.push({ id: uid(), name, kg, price, date: new Date().toISOString() });
   save();
   e.target.reset();
-  document.getElementById('pantryQty').value = 1;
   renderAll();
 });
 
-function renderPantry(){
-  const el = document.getElementById('pantryList');
-  if(pantry.length === 0){ el.innerHTML = '<p class="empty">Kilerin boş. Yukarıdan ürün ekle.</p>'; return; }
-  el.innerHTML = pantry.map(p => `
+function renderWeekly(){
+  const weekItems = pantry.filter(p => isThisWeek(p.date));
+  const totalKg = weekItems.reduce((s,p) => s + p.kg, 0);
+  const totalPrice = weekItems.reduce((s,p) => s + p.price, 0);
+
+  document.getElementById('weeklySummary').innerHTML = `
+    <div class="card"><div class="label">📦 Bu Hafta Toplam Kilo</div><div class="value">${totalKg.toFixed(1)} kg</div></div>
+    <div class="card"><div class="label">💰 Bu Hafta Toplam Harcama</div><div class="value">${totalPrice.toFixed(0)} TL</div></div>
+  `;
+
+  const el = document.getElementById('weeklyList');
+  if(weekItems.length === 0){ el.innerHTML = '<p class="empty">Bu hafta henüz ürün girmedin.</p>'; return; }
+  el.innerHTML = [...weekItems].reverse().map(p => `
     <li>
       <div>
         <span class="name">${escapeHtml(p.name)}</span>
-        <div class="meta">${p.qty} ${p.unit}${p.expiry ? ' · SKT: ' + p.expiry : ''}</div>
+        <div class="meta">${p.kg} kg · ${p.price.toFixed(0)} TL</div>
       </div>
       <button class="del" onclick="removePantry('${p.id}')">✕</button>
     </li>`).join('');
 }
-function removePantry(id){
-  pantry = pantry.filter(p => p.id !== id);
-  save(); renderAll();
-}
 
-// ---------- TARİFLER ----------
-function renderRecipes(){
-  const el = document.getElementById('recipeList');
-  const scored = RECIPES.map(r => ({ r, ...recipeMatch(r) })).sort((a,b) => b.pct - a.pct);
-  el.innerHTML = scored.map(({r, pct, missing}) => `
-    <div class="recipe-card">
-      <span class="pct ${pct < 60 ? 'low' : ''}">%${pct} malzeme mevcut</span>
-      <h4>${r.name}</h4>
-      <div class="meta">⏱ ${r.time} · 🔥 ${r.kcal} kcal · 🍽 ${r.servings} porsiyon</div>
-      ${missing.length ? `<div class="missing">Eksik: ${missing.join(', ')}</div>` : '<div>✅ Tüm malzemeler evde</div>'}
-      <details>
-        <summary>Malzemeler ve Yapılışı</summary>
-        <ul>${r.ingredients.map(i => `<li>${i}</li>`).join('')}</ul>
-        <p>${r.steps}</p>
-      </details>
-      <div>
-        <a class="yt" target="_blank" href="https://www.youtube.com/results?search_query=${encodeURIComponent(r.name + ' tarifi')}">🎥 YouTube'da Ara</a>
-        ${missing.length ? `<button class="add-missing" onclick='addMissingToList(${JSON.stringify(missing)})'>Eksikleri Market Listesine Ekle</button>` : ''}
+// ---------- PİŞİR BUTONU ----------
+document.getElementById('cookBtn').addEventListener('click', () => {
+  renderRecipeLinks();
+  switchTab('recipes');
+});
+
+function renderRecipeLinks(){
+  const el = document.getElementById('recipeLinks');
+
+  if(pantry.length === 0){
+    el.innerHTML = '<p class="empty">Önce Ana Sayfa\'dan evine aldığın ürünleri gir.</p>';
+    return;
+  }
+
+  const scored = DISHES.map(d => ({ d, ...dishMatch(d) }))
+    .filter(x => x.pct > 0)
+    .sort((a,b) => b.pct - a.pct);
+
+  const allNames = [...new Set(pantry.map(p => p.name.trim()))];
+  const generalQuery = allNames.join(', ') + ' ile ne yapılır';
+
+  let html = `
+    <div class="recipe-card general">
+      <h4>🔎 Elimdekilerle Genel Arama</h4>
+      <div class="meta">${escapeHtml(allNames.join(', '))}</div>
+      <div class="link-row">
+        <a class="src-link yt" target="_blank" href="${youtubeSearchUrl(generalQuery)}">🎥 YouTube'da Video</a>
+        <a class="src-link" target="_blank" href="${googleSearchUrl(generalQuery)}">📝 Google'da Tarif</a>
       </div>
     </div>
-  `).join('');
+  `;
+
+  if(scored.length === 0){
+    html += '<p class="empty">Evindeki ürünlerle tam eşleşen bir yemek bulamadık, yukarıdaki genel aramayı deneyebilirsin.</p>';
+  } else {
+    html += scored.map(({d, pct, missing}) => `
+      <div class="recipe-card">
+        <span class="pct ${pct < 60 ? 'low' : ''}">%${pct} malzeme mevcut</span>
+        <h4>${d.name}</h4>
+        ${missing.length ? `<div class="missing">Eksik: ${missing.join(', ')}</div>` : '<div>✅ Tüm malzemeler evde</div>'}
+        <div class="link-row">
+          <a class="src-link yt" target="_blank" href="${youtubeSearchUrl(d.name + ' tarifi')}">🎥 YouTube</a>
+          <a class="src-link" target="_blank" href="${googleSearchUrl(d.name + ' tarifi')}">📝 Google</a>
+          <a class="src-link" target="_blank" href="${nefisSearchUrl(d.name)}">🍲 Nefis Yemek Tarifleri</a>
+          <a class="src-link" target="_blank" href="${yemekComSearchUrl(d.name)}">🍽️ Yemek.com</a>
+        </div>
+        ${missing.length ? `<button class="add-missing" onclick='addMissingToList(${JSON.stringify(missing)})'>Eksikleri Market Listesine Ekle</button>` : ''}
+      </div>
+    `).join('');
+  }
+
+  el.innerHTML = html;
 }
 function addMissingToList(missing){
   missing.forEach(name => {
@@ -138,6 +175,24 @@ function addMissingToList(missing){
   });
   save(); renderAll();
   switchTab('market');
+}
+
+// ---------- KİLER (EVDEKİ ÜRÜNLER LİSTESİ) ----------
+function renderPantry(){
+  const el = document.getElementById('pantryList');
+  if(pantry.length === 0){ el.innerHTML = '<p class="empty">Kilerin boş. Ana Sayfa\'dan ürün ekleyebilirsin.</p>'; return; }
+  el.innerHTML = [...pantry].reverse().map(p => `
+    <li>
+      <div>
+        <span class="name">${escapeHtml(p.name)}</span>
+        <div class="meta">${p.kg} kg · ${p.price.toFixed(0)} TL · ${new Date(p.date).toLocaleDateString('tr-TR')}</div>
+      </div>
+      <button class="del" onclick="removePantry('${p.id}')">✕</button>
+    </li>`).join('');
+}
+function removePantry(id){
+  pantry = pantry.filter(p => p.id !== id);
+  save(); renderAll();
 }
 
 // ---------- MARKET LİSTESİ ----------
@@ -150,12 +205,10 @@ document.getElementById('shoppingForm').addEventListener('submit', e => {
   e.target.reset();
   renderAll();
 });
-function renderShopping(targetId, limit){
-  const el = document.getElementById(targetId);
-  let list = shoppingList;
-  if(limit) list = list.slice(0, limit);
-  if(list.length === 0){ el.innerHTML = '<p class="empty">Market listesi boş.</p>'; return; }
-  el.innerHTML = list.map(s => `
+function renderShopping(){
+  const el = document.getElementById('shoppingListEl');
+  if(shoppingList.length === 0){ el.innerHTML = '<p class="empty">Market listesi boş.</p>'; return; }
+  el.innerHTML = shoppingList.map(s => `
     <li class="${s.checked ? 'checked' : ''}">
       <label style="display:flex;align-items:center;gap:8px;flex:1;">
         <input type="checkbox" ${s.checked ? 'checked' : ''} onchange="toggleShopping('${s.id}')">
@@ -174,51 +227,32 @@ function removeShopping(id){
   save(); renderAll();
 }
 
-// ---------- HARCAMA TAKİBİ ----------
-document.getElementById('expenseForm').addEventListener('submit', e => {
-  e.preventDefault();
-  const amount = parseFloat(document.getElementById('expenseAmount').value);
-  const category = document.getElementById('expenseCategory').value;
-  if(!amount) return;
-  expenses.push({ id: uid(), date: new Date().toISOString(), amount, category });
-  save();
-  e.target.reset();
-  renderAll();
-});
+// ---------- HARCAMA TAKİBİ (İSTATİSTİKLER) ----------
 function renderExpenses(){
   const thisMonth = monthKey();
-  const monthTotal = expenses.filter(x => monthKey(x.date) === thisMonth)
+  const pantryMonthTotal = pantry.filter(p => monthKey(p.date) === thisMonth)
+    .reduce((sum,p) => sum + p.price, 0);
+  const otherMonthTotal = expenses.filter(x => monthKey(x.date) === thisMonth)
     .reduce((sum,x) => sum + x.amount, 0);
-
-  // son 4 ay
-  const months = {};
-  expenses.forEach(x => {
-    const m = monthKey(x.date);
-    months[m] = (months[m]||0) + x.amount;
-  });
-  const sortedMonths = Object.keys(months).sort().slice(-4);
+  const monthTotal = pantryMonthTotal + otherMonthTotal;
 
   document.getElementById('expenseSummary').innerHTML = `
     <div class="card"><div class="label">Bu Ay Toplam Harcama</div><div class="value">${monthTotal.toFixed(0)} TL</div></div>
-    ${sortedMonths.map(m => `<div class="card"><div class="label">${m}</div><div class="value">${months[m].toFixed(0)} TL</div></div>`).join('')}
+    <div class="card"><div class="label">Bu Ay Market (kg girişleri)</div><div class="value">${pantryMonthTotal.toFixed(0)} TL</div></div>
   `;
 
-  const history = [...expenses].sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,10);
+  const history = [...pantry].map(p => ({ date:p.date, label:p.name, amount:p.price }))
+    .concat(expenses.map(x => ({ date:x.date, label:x.category, amount:x.amount })))
+    .sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0,10);
+
   document.getElementById('expenseHistory').innerHTML = history.length ? history.map(x => `
     <li>
       <div>
-        <span class="name">${x.category}</span>
+        <span class="name">${escapeHtml(x.label)}</span>
         <div class="meta">${new Date(x.date).toLocaleDateString('tr-TR')}</div>
       </div>
-      <div>
-        <b>${x.amount.toFixed(0)} TL</b>
-        <button class="del" onclick="removeExpense('${x.id}')">✕</button>
-      </div>
+      <b>${x.amount.toFixed(0)} TL</b>
     </li>`).join('') : '<p class="empty">Henüz harcama kaydı yok.</p>';
-}
-function removeExpense(id){
-  expenses = expenses.filter(x => x.id !== id);
-  save(); renderAll();
 }
 
 // ---------- SU TAKİBİ ----------
@@ -237,27 +271,6 @@ function renderWater(){
   document.getElementById('waterGoal').textContent = WATER_GOAL;
 }
 
-// ---------- ANA SAYFA ----------
-function renderHome(){
-  const monthTotal = expenses.filter(x => monthKey(x.date) === monthKey())
-    .reduce((s,x) => s + x.amount, 0);
-  document.getElementById('homeSummary').innerHTML = `
-    <div class="card"><div class="label">💧 Su</div><div class="value">${waterToday()} ml</div></div>
-    <div class="card"><div class="label">🏠 Evde Ürün</div><div class="value">${pantry.length} adet</div></div>
-    <div class="card"><div class="label">💰 Bu Ay Market</div><div class="value">${monthTotal.toFixed(0)} TL</div></div>
-    <div class="card"><div class="label">🛒 Eksik Ürün</div><div class="value">${shoppingList.filter(s=>!s.checked).length}</div></div>
-  `;
-
-  const scored = RECIPES.map(r => ({ r, ...recipeMatch(r) })).sort((a,b) => b.pct - a.pct).slice(0,3);
-  document.getElementById('homeRecipes').innerHTML = scored.map(({r,pct}) => `
-    <div class="recipe-card">
-      <span class="pct ${pct < 60 ? 'low' : ''}">%${pct} malzeme mevcut</span>
-      <h4>${r.name}</h4>
-    </div>`).join('');
-
-  renderShopping('homeShopping', 5);
-}
-
 // ---------- YARDIMCI ----------
 function escapeHtml(str){
   const div = document.createElement('div');
@@ -266,10 +279,9 @@ function escapeHtml(str){
 }
 
 function renderAll(){
-  renderHome();
+  renderWeekly();
   renderPantry();
-  renderRecipes();
-  renderShopping('shoppingListEl');
+  renderShopping();
   renderExpenses();
   renderWater();
 }
